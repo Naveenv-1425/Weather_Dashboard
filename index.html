@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Weather Dashboard</title>
+
+<style>
+body{
+    font-family: Arial, Helvetica, sans-serif;
+    background: linear-gradient(135deg,#2193b0,#6dd5ed);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+    margin:0;
+}
+
+.container{
+    background:white;
+    padding:25px;
+    border-radius:15px;
+    width:320px;
+    text-align:center;
+    box-shadow:0 0 20px rgba(0,0,0,0.2);
+}
+
+h1{
+    margin-bottom:10px;
+}
+
+input{
+    width:80%;
+    padding:10px;
+    margin:10px 0;
+    border-radius:8px;
+    border:1px solid #ccc;
+}
+
+button{
+    padding:10px 15px;
+    border:none;
+    background:#2193b0;
+    color:white;
+    border-radius:8px;
+    cursor:pointer;
+}
+
+button:hover{
+    background:#176d82;
+}
+
+.weather{
+    margin-top:20px;
+    font-size:18px;
+}
+
+.temperature{
+    font-size:28px;
+    font-weight:bold;
+    color:#ff5722;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <h1>Weather Dashboard</h1>
+    <input type="text" id="city" placeholder="Enter city name">
+    <br>
+    <button onclick="getWeather()">Get Weather</button>
+
+    <div class="weather" id="weatherResult"></div>
+</div>
+
+<script>
+async function getCoordinates(city){
+    const geoURL = `https://geocoding-api.open-meteo.com/v1/search?name=${city}&count=1`;
+    const res = await fetch(geoURL);
+    const data = await res.json();
+
+    if(!data.results){
+        throw "City not found";
+    }
+
+    return {
+        lat: data.results[0].latitude,
+        lon: data.results[0].longitude,
+        name: data.results[0].name,
+        country: data.results[0].country
+    };
+}
+
+async function getWeather(){
+    const city = document.getElementById("city").value.trim();
+    const result = document.getElementById("weatherResult");
+
+    if(city === ""){
+        result.innerHTML = "Please enter a city name";
+        return;
+    }
+
+    try{
+        const location = await getCoordinates(city);
+
+        const weatherURL = `https://api.open-meteo.com/v1/forecast?latitude=${location.lat}&longitude=${location.lon}&current_weather=true`;
+        const res = await fetch(weatherURL);
+        const data = await res.json();
+
+        const temp = data.current_weather.temperature;
+        const wind = data.current_weather.windspeed;
+
+        result.innerHTML = `
+            <h2>${location.name}, ${location.country}</h2>
+            <div class="temp">${temp}°C</div>
+            <p>Wind Speed: ${wind} km/h</p>
+            <p>Time: ${data.current_weather.time}</p>
+        `;
+    }
+    catch(err){
+        result.innerHTML = "City not found or network error";
+    }
+}
+</script>
+
+</body>
+</html>
